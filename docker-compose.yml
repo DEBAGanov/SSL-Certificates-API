@@ -1,6 +1,6 @@
 # /**
 #  * @file: docker-compose.yml
-#  * @description: Docker Compose для Timeweb App Platform (минимальная конфигурация)
+#  * @description: Docker Compose для Timeweb App Platform
 #  * @dependencies: Dockerfile, Caddyfile
 #  * @created: 2025-12-05
 #  */
@@ -8,6 +8,4 @@
 services:
   caddy:
     build: .
-    ports:
-      - "80:80"
-      - "443:443"
+    # Порты управляются платформой Timeweb App Platform
