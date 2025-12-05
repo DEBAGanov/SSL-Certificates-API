@@ -11,8 +11,7 @@ services:
     container_name: ssl-caddy
     restart: unless-stopped
     command: ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--resume"]
-    cap_add:
-      - NET_ADMIN
+    # cap_add: NET_ADMIN убран - не поддерживается Timeweb App Platform
     ports:
       - "80:80"       # HTTP - для ACME challenge и редиректа
       - "443:443"     # HTTPS
