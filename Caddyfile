@@ -1,7 +1,6 @@
 # /**
 #  * @file: Caddyfile
-#  * @description: Конфигурация Caddy для автоматических SSL сертификатов
-#  * @dependencies: docker-compose.yml
+#  * @description: Конфигурация Caddy для Timeweb App Platform
 #  * @created: 2025-12-05
 #  */
 
@@ -9,156 +8,88 @@
 # ГЛОБАЛЬНЫЕ НАСТРОЙКИ
 # =============================================================================
 {
-    # Email для Let's Encrypt уведомлений
-    email baganov.v@gmail.com
+    # Отключаем автоматический HTTPS - платформа сама управляет SSL
+    auto_https off
     
-    # Использовать production Let's Encrypt
-    acme_ca https://acme-v02.api.letsencrypt.org/directory
-    
-    # Для тестирования раскомментируйте staging (без лимитов):
-    # acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
-    
-    # Глобальное логирование
-    log {
-        output stdout
-        format json
-        level INFO
-    }
+    # Слушаем на порту 80
+    http_port 80
 }
 
 # =============================================================================
-# ОБЩИЕ СНИППЕТЫ
+# Основной обработчик - проксирование на backend серверы
 # =============================================================================
 
-# Сниппет для security headers
-(security_headers) {
+:80 {
+    # Логирование
+    log {
+        output stdout
+        format json
+    }
+    
+    # Сжатие
+    encode gzip zstd
+    
+    # Security headers
     header {
-        # HSTS - принудительный HTTPS
-        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-        # Защита от MIME sniffing
         X-Content-Type-Options "nosniff"
-        # Защита от clickjacking
         X-Frame-Options "SAMEORIGIN"
-        # XSS защита
         X-XSS-Protection "1; mode=block"
-        # Referrer policy
-        Referrer-Policy "strict-origin-when-cross-origin"
-        # Удаляем заголовок Server
         -Server
     }
-}
-
-# Сниппет для сжатия
-(compression) {
-    encode gzip zstd
-}
-
-# Сниппет для логирования запросов
-(access_log) {
-    log {
-        output stdout
-        format json
-    }
-}
-
-# =============================================================================
-# ДОМЕН: dimbopizza.ru
-# IP: 2.59.42.195
-# =============================================================================
-dimbopizza.ru {
-    import security_headers
-    import compression
-    import access_log
     
-    reverse_proxy http://2.59.42.195:80 {
-        # Health check
-        health_uri /
-        health_interval 30s
-        health_timeout 5s
-        
-        # Заголовки для backend
-        header_up Host {host}
-        header_up X-Real-IP {remote_host}
-        header_up X-Forwarded-For {remote_host}
-        header_up X-Forwarded-Proto {scheme}
+    # Роутинг по Host header
+    @dimbopizza host dimbopizza.ru www.dimbopizza.ru
+    handle @dimbopizza {
+        reverse_proxy http://2.59.42.195:80 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
     }
-}
-
-# =============================================================================
-# ДОМЕНЫ НА СЕРВЕРЕ: 31.130.147.150
-# antaliya.volzhck.ru, api.volzhck.ru, dimbo.volzhck.ru, dodopizza.volzhck.ru
-# =============================================================================
-
-# Antaliya
-antaliya.volzhck.ru {
-    import security_headers
-    import compression
-    import access_log
     
-    reverse_proxy http://31.130.147.150:80 {
-        header_up Host {host}
-        header_up X-Real-IP {remote_host}
-        header_up X-Forwarded-For {remote_host}
-        header_up X-Forwarded-Proto {scheme}
+    @antaliya host antaliya.volzhck.ru
+    handle @antaliya {
+        reverse_proxy http://31.130.147.150:80 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
     }
-}
-
-# API
-api.volzhck.ru {
-    import security_headers
-    import compression
-    import access_log
     
-    reverse_proxy http://31.130.147.150:80 {
-        header_up Host {host}
-        header_up X-Real-IP {remote_host}
-        header_up X-Forwarded-For {remote_host}
-        header_up X-Forwarded-Proto {scheme}
+    @api host api.volzhck.ru
+    handle @api {
+        reverse_proxy http://31.130.147.150:80 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
     }
-}
-
-# Dimbo
-dimbo.volzhck.ru {
-    import security_headers
-    import compression
-    import access_log
     
-    reverse_proxy http://31.130.147.150:80 {
-        header_up Host {host}
-        header_up X-Real-IP {remote_host}
-        header_up X-Forwarded-For {remote_host}
-        header_up X-Forwarded-Proto {scheme}
+    @dimbo host dimbo.volzhck.ru
+    handle @dimbo {
+        reverse_proxy http://31.130.147.150:80 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
     }
-}
-
-# Dodopizza
-dodopizza.volzhck.ru {
-    import security_headers
-    import compression
-    import access_log
     
-    reverse_proxy http://31.130.147.150:80 {
-        header_up Host {host}
-        header_up X-Real-IP {remote_host}
-        header_up X-Forwarded-For {remote_host}
-        header_up X-Forwarded-Proto {scheme}
+    @dodopizza host dodopizza.volzhck.ru
+    handle @dodopizza {
+        reverse_proxy http://31.130.147.150:80 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+    
+    # Дефолтный ответ для проверки работоспособности
+    handle {
+        respond "Caddy SSL Proxy is running" 200
     }
 }
-
-# =============================================================================
-# ПРИМЕЧАНИЯ
-# =============================================================================
-# 
-# Для добавления нового домена:
-# 1. Добавьте A-запись в DNS, указывающую на IP сервера с Caddy
-# 2. Добавьте блок конфигурации по шаблону выше
-# 3. Перезапустите Caddy: docker compose restart caddy
-#
-# Для проверки конфигурации:
-# docker compose exec caddy caddy validate --config /etc/caddy/Caddyfile
-#
-# Для просмотра логов:
-# docker compose logs -f caddy
-#
-# =============================================================================
-

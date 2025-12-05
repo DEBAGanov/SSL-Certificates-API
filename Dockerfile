@@ -9,9 +9,8 @@ FROM caddy:2.10.2-alpine
 # Копируем Caddyfile в образ
 COPY Caddyfile /etc/caddy/Caddyfile
 
-# Порты
-EXPOSE 80 443
+# Указываем порт для Timeweb App Platform
+EXPOSE 80
 
 # Запуск Caddy
 CMD ["caddy", "run", "--config", "/etc/caddy/Caddyfile"]
-
