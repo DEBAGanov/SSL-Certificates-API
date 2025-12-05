@@ -1,51 +1,13 @@
 # /**
 #  * @file: docker-compose.yml
-#  * @description: Docker Compose конфигурация для Caddy SSL сервиса
-#  * @dependencies: Caddyfile, .env
+#  * @description: Docker Compose для Timeweb App Platform (минимальная конфигурация)
+#  * @dependencies: Dockerfile, Caddyfile
 #  * @created: 2025-12-05
 #  */
 
 services:
   caddy:
-    image: caddy:2.10.2-alpine
-    container_name: ssl-caddy
-    restart: unless-stopped
-    command: ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--resume"]
-    # cap_add: NET_ADMIN убран - не поддерживается Timeweb App Platform
+    build: .
     ports:
-      - "80:80"       # HTTP - для ACME challenge и редиректа
-      - "443:443"     # HTTPS
-      - "443:443/udp" # HTTP/3 (QUIC)
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
-    environment:
-      - ACME_EMAIL=${ACME_EMAIL:-baganov.v@gmail.com}
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-    networks:
-      - ssl_network
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
-
-volumes:
-  # Хранение SSL сертификатов и ключей
-  caddy_data:
-    driver: local
-  # Хранение конфигурации Caddy
-  caddy_config:
-    driver: local
-
-networks:
-  ssl_network:
-    driver: bridge
-    name: ssl_network
-
+      - "80:80"
+      - "443:443"
